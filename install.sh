@@ -1,7 +1,7 @@
 #!/bin/bash
 # DockEasy Install / Update / Uninstall Script
 # Usage:
-#   curl -sSL https://sirajli.dev/dockeasy/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash
 #   DOCKEASY_VERSION=v0.1.2 bash install.sh
 #   bash install.sh --version v0.1.2
 #   bash install.sh update [--version v0.1.2]
@@ -11,7 +11,7 @@
 set -e
 
 # ─── Constants ───────────────────────────────────────────────────────────────
-BASE_URL="https://sirajli.dev/dockeasy"
+BASE_URL="https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main"
 GHCR_OWNER="elvin0802"
 DOCKEASY_DIR="/etc/dockeasy"
 COMPOSE_FILE="$DOCKEASY_DIR/docker-compose.prod.yml"

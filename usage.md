@@ -2,7 +2,7 @@
 
 One script handles **install**, **update**, and **uninstall**. Always run it with **`bash`** (the script uses bash features — `sh` will not work).
 
-- Script URL: `https://sirajli.dev/dockeasy/install.sh`
+- Script URL: `https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh`
 - Must run as **root** (use `sudo -i` or a root shell).
 - Only **Linux** hosts; it refuses to run inside a Docker container.
 - Ports **80** and **443** must be free on first install.
@@ -14,11 +14,11 @@ One script handles **install**, **update**, and **uninstall**. Always run it wit
 
 | Action | Command |
 |---|---|
-| Install latest | `curl -sSL https://sirajli.dev/dockeasy/install.sh \| bash` |
-| Install specific version | `curl -sSL https://sirajli.dev/dockeasy/install.sh \| bash -s -- --version v0.1.1` |
-| Update to latest | `curl -sSL https://sirajli.dev/dockeasy/install.sh \| bash -s -- update` |
-| Update to specific version | `curl -sSL https://sirajli.dev/dockeasy/install.sh \| bash -s -- update --version v0.1.1` |
-| Uninstall (keep data) | `curl -sSL https://sirajli.dev/dockeasy/install.sh \| bash -s -- uninstall` |
+| Install latest | `curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh \| bash` |
+| Install specific version | `curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh \| bash -s -- --version v0.1.1` |
+| Update to latest | `curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh \| bash -s -- update` |
+| Update to specific version | `curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh \| bash -s -- update --version v0.1.1` |
+| Uninstall (keep data) | `curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh \| bash -s -- uninstall` |
 | Uninstall (delete data) | download first, then `bash install.sh uninstall` and answer `y` (see below) |
 
 > `bash -s --` means: run the piped script and pass everything after `--` as its arguments.
@@ -30,17 +30,17 @@ One script handles **install**, **update**, and **uninstall**. Always run it wit
 **Latest stable version** (auto-detected from `version.json`, falls back to `latest`):
 
 ```bash
-curl -sSL https://sirajli.dev/dockeasy/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash
 ```
 
 **A specific version** — two equivalent ways:
 
 ```bash
 # via flag
-curl -sSL https://sirajli.dev/dockeasy/install.sh | bash -s -- --version v0.1.1
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash -s -- --version v0.1.1
 
 # via environment variable
-curl -sSL https://sirajli.dev/dockeasy/install.sh | DOCKEASY_VERSION=v0.1.1 bash
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | DOCKEASY_VERSION=v0.1.1 bash
 ```
 
 After install, open `http://<server-ip>` and go to `http://<server-ip>/auth/setup` to create the admin account.
@@ -54,17 +54,17 @@ Updates image tags in `/etc/dockeasy/.env`, re-downloads the compose file, pulls
 **To the latest version:**
 
 ```bash
-curl -sSL https://sirajli.dev/dockeasy/install.sh | bash -s -- update
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash -s -- update
 ```
 
 **To a specific version** — two equivalent ways:
 
 ```bash
 # via flag
-curl -sSL https://sirajli.dev/dockeasy/install.sh | bash -s -- update --version v0.1.1
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash -s -- update --version v0.1.1
 
 # via environment variable
-curl -sSL https://sirajli.dev/dockeasy/install.sh | DOCKEASY_VERSION=v0.1.1 bash -s -- update
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | DOCKEASY_VERSION=v0.1.1 bash -s -- update
 ```
 
 ---
@@ -74,7 +74,7 @@ curl -sSL https://sirajli.dev/dockeasy/install.sh | DOCKEASY_VERSION=v0.1.1 bash
 Stops and removes all DockEasy containers and deletes `/etc/dockeasy`.
 
 ```bash
-curl -sSL https://sirajli.dev/dockeasy/install.sh | bash -s -- uninstall
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh | bash -s -- uninstall
 ```
 
 **About database volumes:** uninstall asks *"Remove database volumes too?"*.
@@ -82,7 +82,7 @@ curl -sSL https://sirajli.dev/dockeasy/install.sh | bash -s -- uninstall
 - To actually **delete all data**, download the script and run it locally so you can answer the prompt:
 
 ```bash
-curl -sSL https://sirajli.dev/dockeasy/install.sh -o install.sh
+curl -sSL https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/install.sh -o install.sh
 bash install.sh uninstall
 # answer: y   (to delete database volumes)
 ```
@@ -110,7 +110,7 @@ The version is chosen in this order:
 
 1. `--version vX.Y.Z` flag (highest priority).
 2. `DOCKEASY_VERSION=vX.Y.Z` environment variable.
-3. Auto-detected latest from `https://sirajli.dev/dockeasy/version.json`.
+3. Auto-detected latest from `https://raw.githubusercontent.com/Elvin0802/dockeasy-distribution/main/version.json`.
 4. Falls back to the `latest` image tag if detection fails.
 
 Use tags exactly as published (with the leading `v`), e.g. `v0.1.1`.
