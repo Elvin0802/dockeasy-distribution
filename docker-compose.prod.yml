@@ -1,0 +1,134 @@
+name: dockeasy
+
+services:
+  dockeasy-db:
+    image: postgres:16-alpine
+    container_name: dockeasy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dockeasy}
+      POSTGRES_USER: ${POSTGRES_USER:-dockeasy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - dockeasy-db-data:/var/lib/postgresql/data
+    networks:
+      - dockeasy-internal
+
+  dockeasy-api:
+    image: ${DOCKEASY_API_IMAGE:-ghcr.io/elvin0802/dockeasy-api:latest}
+    pull_policy: always
+    container_name: dockeasy-api
+    restart: unless-stopped
+    depends_on:
+      dockeasy-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      App__ApplyMigrationsOnStartup: "true"
+      ConnectionStrings__DefaultConnection: "Host=dockeasy-db;Port=5432;Database=${POSTGRES_DB:-dockeasy};Username=${POSTGRES_USER:-dockeasy};Password=${POSTGRES_PASSWORD}"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      Jwt__Issuer: ${JWT_ISSUER:-DockEasy}
+      Jwt__Audience: ${JWT_AUDIENCE:-DockEasy}
+      SERVER_IP: ${SERVER_IP:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/v1/system/health || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Host bind mounts at identical container paths — required for Docker-out-of-Docker:
+      # the host daemon resolves compose bind mounts / relative build contexts / backup
+      # sources against the host filesystem, so these must line up host↔container.
+      - /dockeasy/applications:/dockeasy/applications
+      - /dockeasy/backups:/dockeasy/backups
+      - /dockeasy/deploy-logs:/dockeasy/deploy-logs
+      - /etc/dockeasy/traefik:/dockeasy/traefik
+    networks:
+      - dockeasy-internal
+      - dockeasy-network
+
+  dockeasy-web:
+    image: ${DOCKEASY_WEB_IMAGE:-ghcr.io/elvin0802/dockeasy-web:latest}
+    pull_policy: always
+    container_name: dockeasy-web
+    restart: unless-stopped
+    depends_on:
+      dockeasy-api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      # API_INTERNAL_URL is used for SSR requests (server → API directly via Docker network).
+      # NEXT_PUBLIC_* vars are NOT set here — the web app uses relative paths (/api/v1, /hubs)
+      # so the same pre-built image works on any VPS without rebuilding.
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://dockeasy-api:8080}
+      NEXT_PUBLIC_DOCKEASY_VERSION: ${DOCKEASY_VERSION:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - dockeasy-network
+
+  dockeasy-traefik:
+    image: traefik:v3.6.23
+    container_name: dockeasy-traefik
+    restart: unless-stopped
+    environment:
+      # ACME email is set here (empty by default; updated via dashboard when HTTPS domain is configured).
+      # Traefik reads TRAEFIK_* env vars directly — no CLI arg needed for email.
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL:-}
+    command:
+      - --global.sendanonymoususage=false
+      - --log.level=INFO
+      - --api.dashboard=false
+      - --ping=true
+      # Docker provider: routes user-deployed app containers via their labels
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=dockeasy-network
+      # File provider: routes DockEasy system containers (hot-reload on domain changes)
+      - --providers.file.directory=/dockeasy/traefik/dynamic
+      - --providers.file.watch=true
+      # Entry points
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # Let's Encrypt (activated when domain is configured via dashboard)
+      - --certificatesresolvers.letsencrypt.acme.storage=/dockeasy/traefik/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/dockeasy/traefik:/dockeasy/traefik
+    networks:
+      - dockeasy-network
+
+volumes:
+  dockeasy-db-data:
+
+networks:
+  dockeasy-internal:
+    internal: true
+  dockeasy-network:
+    name: dockeasy-network
