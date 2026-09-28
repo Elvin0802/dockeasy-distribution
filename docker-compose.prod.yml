@@ -48,6 +48,8 @@ services:
       start_period: 60s
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # ACME email updates and the Traefik compose restart use these host paths.
+      - /etc/dockeasy:/etc/dockeasy
       # Host bind mounts at identical container paths — required for Docker-out-of-Docker:
       # the host daemon resolves compose bind mounts / relative build contexts / backup
       # sources against the host filesystem, so these must line up host↔container.
